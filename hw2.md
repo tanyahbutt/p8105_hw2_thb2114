@@ -87,32 +87,17 @@ pols_month_df = read_csv("pols-month.csv") %>%
   mutate(prez_gop = recode(prez_gop, `0` = "dem", `1` = "gop", `2` = "gop")) %>% 
   select(year, month, prez_gop, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem) %>% 
   rename(president = prez_gop)
-## Rows: 822 Columns: 9
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## dbl  (8): prez_gop, gov_gop, sen_gop, rep_gop, prez_dem, gov_dem, sen_dem, r...
-## date (1): mon
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
 snp_df = read_csv("snp.csv") %>% 
   janitor::clean_names() %>% 
   mutate(date = mdy(date)) %>% 
   separate(date, c("year", "month", "day")) %>% 
   mutate(year = as.numeric(year)) %>% 
+  mutate(year = ifelse(year > 2021, year - 100, year)) %>% 
   mutate(month = as.numeric(month)) %>% 
   mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
   relocate(year, month, day, close) %>% 
   select(year, month, close)
-## Rows: 787 Columns: 2
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## chr (1): date
-## dbl (1): close
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-# mutate(year = case_when( year >=2068 ~ 'year-100') %>% 
 
 unemployment_df = read_csv("unemployment.csv") %>% 
   janitor::clean_names() %>% 
@@ -120,16 +105,30 @@ unemployment_df = read_csv("unemployment.csv") %>%
   jan:dec,
    names_to = "month",
    values_to = "unemployment percentage")
-## Rows: 68 Columns: 13
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: ","
-## dbl (13): Year, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
 snp_pols_df = left_join(pols_month_df, snp_df, by = c("year" = "year", "month" = "month"))
 snp_pols_unemp_df = left_join(snp_pols_df, unemployment_df, by = c("year" = "year", "month" = "month"))
 ```
+
+The dataset “pols month” contains 822 observations for 9 variables
+related to the number of politicians who are democratic or republican
+from 1947 to 2015. The variable names in this dataset include: year,
+month, president, gov\_gop, sen\_gop, rep\_gop, gov\_dem, sen\_dem,
+rep\_dem.
+
+The dataset “snp” contains 787 observations for 3 variables related to
+the Standard and Poor’s (S&P) stock market index. The years included
+range from 1950 to 2015. The variable names in this dataset include:
+year, month, close.
+
+The dataset “unemployment” contains 816 observations for 3 variables
+related to the Standard and Poor’s (S&P) stock market index. The years
+included range from 1950 to 2015. The variable names in this dataset
+include: year, month, unemployment percentage.
+
+The combined version of these datasets include the following variables:
+year, month, president, gov\_gop, sen\_gop, rep\_gop, gov\_dem,
+sen\_dem, rep\_dem, close, unemployment percentage
 
 ## Problem 3
 
