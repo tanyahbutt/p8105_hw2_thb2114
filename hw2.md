@@ -9,7 +9,7 @@ to the nearest integer.
 
 ``` r
 mr_trash_wheel_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", 
-                               range = "A2:N408")
+                               range = "A2:N535")
 mr_trash_wheel_df = janitor::clean_names(mr_trash_wheel_df) 
 mr_trash_wheel_df = drop_na(mr_trash_wheel_df, dumpster) %>% 
   mutate(sports_balls = round(sports_balls, digits = 0))
@@ -20,12 +20,12 @@ Rows without precipitation data were initially omitted, a year variable
 was added, and the month variable was converted to a character variable.
 
 ``` r
-precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 4,
+precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 6,
                                range = "A2:B14") 
 precipitation_2019_df = drop_na(precipitation_2019_df, Total) %>% 
                         add_column(Year = "2019")
 
-precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 5,
+precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 7,
                                range = "A2:B14") 
 precipitation_2018_df = drop_na(precipitation_2018_df, Total) %>% 
                         add_column(Year = "2018")
@@ -40,27 +40,27 @@ precipitation_2018_2019_df = bind_rows(precipitation_2018_df, precipitation_2019
 nrow(precipitation_2018_df)
 ## [1] 12
 nrow(precipitation_2019_df)
-## [1] 2
+## [1] 12
 ```
 
 The overall “Mr. Trash Wheel” dataset includes the following variables:
 dumpster, month, year, date, weight\_tons, volume\_cubic\_yards,
 plastic\_bottles, polystyrene, cigarette\_butts, glass\_bottles,
 grocery\_bags, chip\_bags, sports\_balls, homes\_powered. It has 14
-columns and 345 observations.
+columns and 454 observations.
 
 Monthly and yearly precipitation amounts are also recorded in sheets in
 the “Mr. Trash Wheel” dataset. The variables included in these sheets
 are: Month, Total, Year.
 
-In 2018, there were 12 months of precipitation. In 2019, only 2 months
-of precipitation were recorded.
+In 2018, there were 12 months of precipitation. In 2019, 12 months of
+precipitation were also recorded.
 
 ``` r
 total_precip_2018 = sum(pull(precipitation_2018_2019_df, `2018`))
 ```
 
-For 2018, the total amount of precipitation was 56.75 in.
+For 2018, the total amount of precipitation was 70.33 in.
 
 ``` r
 mr_trash_wheel_df = select(mr_trash_wheel_df,year, sports_balls) %>% 
