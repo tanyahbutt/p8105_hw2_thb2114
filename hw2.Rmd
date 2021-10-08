@@ -15,7 +15,7 @@ I will import the "Mr. Trash Wheel" dataset, clean the variable names, remove
 non-specific dumpster data, and round the number of sports balls to the nearest integer.
 
 ```{r, collapse = TRUE}
-mr_trash_wheel_df = read_excel("Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+mr_trash_wheel_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", 
                                range = "A2:N408")
 mr_trash_wheel_df = janitor::clean_names(mr_trash_wheel_df) 
 mr_trash_wheel_df = drop_na(mr_trash_wheel_df, dumpster) %>% 
@@ -26,12 +26,12 @@ I will now clean and combine the precipitation data for 2019 and 2018. Rows with
 were initially omitted, a year variable was added, and the month variable was converted to a character variable.
 
 ```{r, collapse = TRUE}
-precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 4,
+precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 4,
                                range = "A2:B14") 
 precipitation_2019_df = drop_na(precipitation_2019_df, Total) %>% 
                         add_column(Year = "2019")
 
-precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 5,
+precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 5,
                                range = "A2:B14") 
 precipitation_2018_df = drop_na(precipitation_2018_df, Total) %>% 
                         add_column(Year = "2018")
@@ -78,7 +78,7 @@ pols_month_df = read_csv("pols-month.csv") %>%
   janitor::clean_names() %>% 
   separate(mon, c("year", "month", "day")) %>% 
   mutate(year = as.numeric(year)) %>% 
-  mutate(month = month.name[as.numeric(month)], month = str_to_lower(month)) %>% 
+  mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
   mutate(day = as.numeric(day)) %>% 
   mutate(prez_gop = recode(prez_gop, `0` = "dem", `1` = "gop", `2` = "gop")) %>% 
   select(year, month, prez_gop, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem) %>% 
@@ -87,19 +87,25 @@ pols_month_df = read_csv("pols-month.csv") %>%
 snp_df = read_csv("snp.csv") %>% 
   janitor::clean_names() %>% 
   mutate(date = mdy(date)) %>% 
-  mutate_at(vars(date), funs(year, month, day))  %>% 
-  mutate(month = month.name[as.numeric(month)], month = str_to_lower(month)) %>% 
+  separate(date, c("year", "month", "day")) %>% 
+  mutate(year = as.numeric(year)) %>% 
+  mutate(month = as.numeric(month)) %>% 
+  mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
   relocate(year, month, day, close) %>% 
   select(year, month, close)
+
+# mutate(year = case_when( year >=2068 ~ 'year-100') %>% 
 
 unemployment_df = read_csv("unemployment.csv") %>% 
   janitor::clean_names() %>% 
   pivot_longer(
-    jan:dec,
-    names_to = "month",
-    values_to = "close")
+  jan:dec,
+   names_to = "month",
+   values_to = "unemployment percentage")
 
-fivethirtyeight_df = left_join(pols_month_df, snp_df, by = c("year" = "year", "month" = "month"))
+snp_pols_df = left_join(pols_month_df, snp_df, by = c("year" = "year", "month" = "month"))
+snp_pols_unemp_df = left_join(snp_pols_df, unemployment_df, by = c("year" = "year", "month" = "month"))
+
 ```
 
 ## Problem 3

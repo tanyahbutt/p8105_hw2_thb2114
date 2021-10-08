@@ -8,7 +8,7 @@ remove non-specific dumpster data, and round the number of sports balls
 to the nearest integer.
 
 ``` r
-mr_trash_wheel_df = read_excel("Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+mr_trash_wheel_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", 
                                range = "A2:N408")
 mr_trash_wheel_df = janitor::clean_names(mr_trash_wheel_df) 
 mr_trash_wheel_df = drop_na(mr_trash_wheel_df, dumpster) %>% 
@@ -20,12 +20,12 @@ Rows without precipitation data were initially omitted, a year variable
 was added, and the month variable was converted to a character variable.
 
 ``` r
-precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 4,
+precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 4,
                                range = "A2:B14") 
 precipitation_2019_df = drop_na(precipitation_2019_df, Total) %>% 
                         add_column(Year = "2019")
 
-precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 5,
+precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 5,
                                range = "A2:B14") 
 precipitation_2018_df = drop_na(precipitation_2018_df, Total) %>% 
                         add_column(Year = "2018")
@@ -40,27 +40,27 @@ precipitation_2018_2019_df = bind_rows(precipitation_2018_df, precipitation_2019
 nrow(precipitation_2018_df)
 ## [1] 12
 nrow(precipitation_2019_df)
-## [1] 6
+## [1] 2
 ```
 
 The overall “Mr. Trash Wheel” dataset includes the following variables:
 dumpster, month, year, date, weight\_tons, volume\_cubic\_yards,
 plastic\_bottles, polystyrene, cigarette\_butts, glass\_bottles,
 grocery\_bags, chip\_bags, sports\_balls, homes\_powered. It has 14
-columns and 344 observations.
+columns and 345 observations.
 
 Monthly and yearly precipitation amounts are also recorded in sheets in
 the “Mr. Trash Wheel” dataset. The variables included in these sheets
 are: Month, Total, Year.
 
-In 2018, there were 12 months of precipitation. In 2019, only 6 months
+In 2018, there were 12 months of precipitation. In 2019, only 2 months
 of precipitation were recorded.
 
 ``` r
 total_precip_2018 = sum(pull(precipitation_2018_2019_df, `2018`))
 ```
 
-For 2018, the total amount of precipitation was 70.33 in.
+For 2018, the total amount of precipitation was 56.75 in.
 
 ``` r
 mr_trash_wheel_df = select(mr_trash_wheel_df,year, sports_balls) %>% 
@@ -70,7 +70,7 @@ median_sports_balls_2019 = median(pull(mr_trash_wheel_df, sports_balls))
 median_sports_balls_2019 = round(median_sports_balls_2019, digits = 0)
 ```
 
-The median number of sports balls in a dumpster in 2019 was 8.
+The median number of sports balls in a dumpster in 2019 was 9.
 
 ## Problem 2
 
@@ -82,7 +82,7 @@ pols_month_df = read_csv("pols-month.csv") %>%
   janitor::clean_names() %>% 
   separate(mon, c("year", "month", "day")) %>% 
   mutate(year = as.numeric(year)) %>% 
-  mutate(month = month.name[as.numeric(month)], month = str_to_lower(month)) %>% 
+  mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
   mutate(day = as.numeric(day)) %>% 
   mutate(prez_gop = recode(prez_gop, `0` = "dem", `1` = "gop", `2` = "gop")) %>% 
   select(year, month, prez_gop, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem) %>% 
@@ -98,8 +98,10 @@ pols_month_df = read_csv("pols-month.csv") %>%
 snp_df = read_csv("snp.csv") %>% 
   janitor::clean_names() %>% 
   mutate(date = mdy(date)) %>% 
-  mutate_at(vars(date), funs(year, month, day))  %>% 
-  mutate(month = month.name[as.numeric(month)], month = str_to_lower(month)) %>% 
+  separate(date, c("year", "month", "day")) %>% 
+  mutate(year = as.numeric(year)) %>% 
+  mutate(month = as.numeric(month)) %>% 
+  mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
   relocate(year, month, day, close) %>% 
   select(year, month, close)
 ## Rows: 787 Columns: 2
@@ -110,25 +112,14 @@ snp_df = read_csv("snp.csv") %>%
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Warning: `funs()` was deprecated in dplyr 0.8.0.
-## Please use a list of either functions or lambdas: 
-## 
-##   # Simple named list: 
-##   list(mean = mean, median = median)
-## 
-##   # Auto named with `tibble::lst()`: 
-##   tibble::lst(mean, median)
-## 
-##   # Using lambdas
-##   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_warnings()` to see where this warning was generated.
+# mutate(year = case_when( year >=2068 ~ 'year-100') %>% 
+
 unemployment_df = read_csv("unemployment.csv") %>% 
   janitor::clean_names() %>% 
   pivot_longer(
-    jan:dec,
-    names_to = "month",
-    values_to = "close")
+  jan:dec,
+   names_to = "month",
+   values_to = "unemployment percentage")
 ## Rows: 68 Columns: 13
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: ","
@@ -136,7 +127,8 @@ unemployment_df = read_csv("unemployment.csv") %>%
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-fivethirtyeight_df = left_join(pols_month_df, snp_df, by = c("year" = "year", "month" = "month"))
+snp_pols_df = left_join(pols_month_df, snp_df, by = c("year" = "year", "month" = "month"))
+snp_pols_unemp_df = left_join(snp_pols_df, unemployment_df, by = c("year" = "year", "month" = "month"))
 ```
 
 ## Problem 3
