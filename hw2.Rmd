@@ -22,21 +22,23 @@ mr_trash_wheel_df = drop_na(mr_trash_wheel_df, dumpster) %>%
   mutate(sports_balls = round(sports_balls, digits = 0))
 ```
 
-I will now clean and combine the precipitation data for 2019 and 2018. Rows without precipitation data 
-were initially omitted, a year variable was added, and the month variable was converted to a character variable.
+I will now clean and combine the precipitation data for 2019 and 2018. Rows 
+without precipitation data were initially omitted, a year variable was added,
+and the month variable was converted to a character variable.
 
 ```{r, collapse = TRUE}
-precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 6,
-                               range = "A2:B14") 
+precipitation_2019_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx",
+                                   sheet = 6,range = "A2:B14") 
 precipitation_2019_df = drop_na(precipitation_2019_df, Total) %>% 
                         add_column(Year = "2019")
 
-precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx", sheet = 7,
-                               range = "A2:B14") 
+precipitation_2018_df = read_excel("Trash-Wheel-Collection-Totals-new.xlsx",
+                                   sheet = 7, range = "A2:B14") 
 precipitation_2018_df = drop_na(precipitation_2018_df, Total) %>% 
                         add_column(Year = "2018")
 
-precipitation_2018_2019_df = bind_rows(precipitation_2018_df, precipitation_2019_df) %>% 
+precipitation_2018_2019_df = bind_rows(precipitation_2018_df, 
+                                       precipitation_2019_df) %>% 
   janitor::clean_names() %>% 
   pivot_wider(
     names_from = "year",
@@ -78,10 +80,13 @@ pols_month_df = read_csv("pols-month.csv") %>%
   janitor::clean_names() %>% 
   separate(mon, c("year", "month", "day")) %>% 
   mutate(year = as.numeric(year)) %>% 
-  mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
+  mutate(month = month.abb[as.numeric(month)], 
+         month = str_to_lower(month)) %>% 
   mutate(day = as.numeric(day)) %>% 
-  mutate(prez_gop = recode(prez_gop, `0` = "dem", `1` = "gop", `2` = "gop")) %>% 
-  select(year, month, prez_gop, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem) %>% 
+  mutate(prez_gop = recode(prez_gop, `0` = "dem", 
+                           `1` = "gop", `2` = "gop")) %>% 
+  select(year, month, prez_gop, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, 
+         rep_dem) %>% 
   rename(president = prez_gop)
 
 snp_df = read_csv("snp.csv") %>% 
@@ -92,17 +97,19 @@ snp_df = read_csv("snp.csv") %>%
   mutate(year = ifelse(year > 2021, year - 100, year)) %>% 
   mutate(month = as.numeric(month)) %>% 
   mutate(month = month.abb[as.numeric(month)], month = str_to_lower(month)) %>% 
-  relocate(year, month, day, close) %>% 
-  select(year, month, close)
+  relocate(year, month, day, close) %>%
+  rename(s_p_closing_value = close) %>% 
+  select(year, month, s_p_closing_value)
 
 unemployment_df = read_csv("unemployment.csv") %>% 
   janitor::clean_names() %>% 
   pivot_longer(
   jan:dec,
    names_to = "month",
-   values_to = "unemployment percentage")
+   values_to = "unemployment_percentage")
 
-snp_pols_df = left_join(pols_month_df, snp_df, by = c("year" = "year", "month" = "month"))
+snp_pols_df = left_join(pols_month_df, snp_df, by = c("year" = "year",
+                                                      "month" = "month"))
 snp_pols_unemp_df = left_join(snp_pols_df, unemployment_df, by = c("year" = "year", "month" = "month"))
 
 ```
@@ -111,7 +118,7 @@ The dataset "pols month" contains `r nrow(pols_month_df)` observations for `r nc
 
 The dataset "snp" contains `r nrow(snp_df)` observations for `r ncol(snp_df)` variables related to the Standard and Poor's (S&P) stock market index. The years included range from 1950 to 2015. The variable names in this dataset include: `r names(snp_df)`.
 
-The dataset "unemployment" contains `r nrow(unemployment_df)` observations for `r ncol(unemployment_df)` variables related to the Standard and Poor's (S&P) stock market index. The years included range from 1950 to 2015. The variable names in this dataset include: `r names(unemployment_df)`.
+The dataset "unemployment" contains `r nrow(unemployment_df)` observations for `r ncol(unemployment_df)` variables related to the monthly percentage of unemployment from 1950 to 2015. The variable names in this dataset include: `r names(unemployment_df)`.
 
 The combined version of these datasets include the following variables: `r names(snp_pols_unemp_df)`
 
@@ -125,18 +132,25 @@ babynames_df = read.csv("Popular_Baby_Names.csv") %>%
   mutate(ethnicity = recode(ethnicity, "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER",
                             "BLACK NON HISP" = "BLACK NON HISPANIC", 
                             "WHITE NON HISP" = "WHITE NON HISPANIC")) %>% 
+  mutate(child_s_first_name = toupper(child_s_first_name)) %>% 
   distinct(year_of_birth, sex, ethnicity, child_s_first_name, count, rank)
 ```
 
 I will now create a table showing the rank in popularity and name count of the female baby name "Olivia" over time.
 ```{r}
-olivia_df = filter(babynames_df, child_s_first_name == "Olivia") %>% 
-  pivot_wider(names_from = year_of_birth, values_from = c(rank,count), values_fill = 0) %>% 
-  relocate(child_s_first_name, sex, ethnicity, rank_2013, count_2013, rank_2014, count_2014,
+olivia_df = filter(babynames_df, child_s_first_name == "OLIVIA") %>% 
+  pivot_wider(names_from = year_of_birth, values_from = c(rank,count),
+              values_fill = 0) %>% 
+  relocate(child_s_first_name, sex, ethnicity, rank_2011, count_2011, rank_2012, 
+           count_2012, rank_2013, count_2013, rank_2014, count_2014,
            rank_2015, count_2015, rank_2016, count_2016) %>% 
   rename("Child's Name" = child_s_first_name) %>% 
   rename(Sex = sex) %>% 
   rename("Race/Ethnicity" = ethnicity) %>% 
+  rename("Rank in 2011" = rank_2011) %>% 
+  rename("Count in 2011" = count_2011) %>% 
+  rename("Rank in 2012" = rank_2012) %>% 
+  rename("Count in 2012" = count_2012) %>%
   rename("Rank in 2013" = rank_2013) %>% 
   rename("Count in 2013" = count_2013) %>% 
   rename("Rank in 2014" = rank_2014) %>% 
@@ -152,13 +166,17 @@ olivia_df
 
 I will now produce a table ranking the most popular name among male children over time.
 
-```{r}
+```{r, collapse = TRUE}
+#Identify male names with rank = 1
+popular_male_names_df = select(babynames_df, year_of_birth, sex, ethnicity,
+                                child_s_first_name, rank) %>% 
+  filter(sex == "MALE", rank == '1') 
+
 popular_male_names_df = select(babynames_df, year_of_birth, sex, ethnicity, child_s_first_name, rank) %>% 
-  filter(sex == "MALE", rank == '1') %>% 
-  pivot_wider(names_from = year_of_birth, values_from = rank) %>% 
+  filter(child_s_first_name %in% c("ETHAN", "NOAH","LIAM","JOSEPH","JAYDEN","DAVID", "RYAN","MICHAEL")) %>% 
+pivot_wider(names_from = year_of_birth, values_from = rank) %>% 
   relocate(child_s_first_name, ethnicity, '2016', '2015', '2014', '2013', '2012', '2011') %>% 
   select(child_s_first_name, ethnicity, '2016', '2015', '2014', '2013', '2012', '2011') %>% 
-  rename("Child's Name" = child_s_first_name) %>% 
   rename("Race/Ethnicity" = ethnicity) %>% 
   rename("Rank in 2016" = '2016') %>% 
   rename("Rank in 2015" = '2015') %>% 
@@ -166,18 +184,21 @@ popular_male_names_df = select(babynames_df, year_of_birth, sex, ethnicity, chil
   rename("Rank in 2013" = '2013') %>% 
   rename("Rank in 2012" = '2012') %>% 
   rename("Rank in 2011" = '2011') %>% 
+  arrange(child_s_first_name) %>% 
+  rename("Child's Name" = child_s_first_name) %>% 
   knitr::kable()
 
 popular_male_names_df
 ```
 
-I will now create a scatter plot showing the number of children with a name vs. the rank in popularity of that name, for white 
-non-hispanic children born in 2016.
+I will now create a scatter plot showing the number of children with a name vs. the rank in popularity of that name, for white non-hispanic male children born in 2016.
 
 ```{r}
-scatter_plot_df = select(babynames_df, year_of_birth, sex, ethnicity, child_s_first_name, rank) %>% 
-                         filter(year_of_birth == '2016', sex == "MALE", ethnicity == "WHITE NON HISPANIC")
+scatter_plot_df = select(babynames_df, year_of_birth, sex, ethnicity, child_s_first_name, rank, count) %>% 
+                         filter(year_of_birth == '2016', sex == "MALE", ethnicity == "WHITE NON HISPANIC") 
 
-ggplot(scatter_plot_df, aes(x = rank, y = child_s_first_name)) + geom_point()
+ggplot(scatter_plot_df, aes(x = rank, y = count)) + 
+  geom_point() +
+  xlab("Rank in Popularity of that Name") + ylab("Number of Children with Name")
 ```
 
